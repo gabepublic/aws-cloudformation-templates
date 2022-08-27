@@ -52,7 +52,7 @@ Deploy a basic VPC with 4 subnets:
 ![VPC Network ACL - Inbound rules](/images/vpc-4subnets-networkacl-inboundrules.jpg)
 ![VPC Network ACL - Outbound rules](/images/vpc-4subnets-networkacl-outboundrules.jpg)
 ![VPC Network ACL - Subnet Associations](/images/vpc-4subnets-networkacl-subnetassociations.jpg)
-![VPC Network ACL - Tags](/images/vpc-4subnets-networkacl-tagsvpc-4subnets-networkacl-tags.jpg)
+![VPC Network ACL - Tags](/images/vpc-4subnets-networkacl-tags.jpg)
 
 ![VPC Security Group - Details](/images/vpc-4subnets-securitygroup-details.jpg)
 ![VPC Security Group - Inbound rules](/images/vpc-4subnets-securitygroup-inboundrules.jpg)
