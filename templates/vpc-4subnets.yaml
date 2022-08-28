@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-# This CloudFormation template deploys a basic VPC.
+# This CloudFormation template deploys a basic VPC:
 # - with 4 subnets (2 public, 2 private) 
 # - across 2 fixed Availability Zones (us-west-2a, us-west-2b)
 # Purpose: to test a very simple deployment
