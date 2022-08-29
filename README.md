@@ -2,14 +2,21 @@
 
 CloudFormation templates for various infrastructure stacks.
 
+
 ## EC2 with ingress on port 80
 
 Template filename: `templates/ec2-website-port80.yaml`
 
 Deploys a basic EC2:
-- with httpd
-- very simple website
+- very simple website with httpd
 - security group to allow ingress port 80 for accessing the website
+
+**Goal:**
+- to demonstrate how to setup EC2 instance 
+- enable the website, hosted in the EC2 instance, to be accessible from the
+  internet through port 80, using the EC2 Security Group configuration
+- NOTE: for a more comprehensive approach using VPC, please refer to 
+  "VPC with 1 public subnet, internet gateway and EC2 + website" section below.  
 
 ### Create the stack using aws cli
 
@@ -43,18 +50,35 @@ aws cloudformation create-stack --stack-name "ec2-website-port80" --template-bod
 
 ![Webpage](/images/ec2-website-port80-webpage.jpg)
 
+- Egress to the internet from the ec2 instance is also enabled this security 
+  group approach, but cannot be tested in this case (or using this particuar 
+  cloudformation template) because the ec2 instance is enabled for `ssh`. 
+  The egress will be validated on the next template "EC2 with ingress on port 22".
+
+### CLEANUP using aws cli
+
+```
+$ aws cloudformation delete-stack --stack-name "ec2-website-port80"
+```
+
 
 ## EC2 with ingress on port 22
 
 Template filename: `templates/ec2-website-port22.yaml`
 
 Deploys a basic EC2:
-- with httpd & very simple website but not acessible from outside because
-  the security group does not allow ingress port 80;
-  see "EC2 with ingress on port 80"
+- very simple website with httpd & but it's not acessible from the internet 
+  because the security group is not enabled for ingress port 80.
+  See the "EC2 with ingress on port 80" section above how to enable access to
+  the website from internet
 - the key-pair for ssh into the instance; need to be provided during stack setup,
   either aws console or aws cli
-- security group to allow ingress port 22 for ssh into the instance
+- security group to allow ingress port 22 for ssh into the instance, and
+  egress to the internet
+
+**Goal:**
+- to demonstrate how to enable SSH through port 22 to the EC2 instance from the
+  internet
 
 ## Prerequisite - create the key-pair
 
@@ -69,6 +93,8 @@ aws cloudformation create-stack --stack-name "ec2-website-port22" --parameters P
 
 ### Validate
 
+**EC2**
+
 ![EC2 Security](/images/ec2-website-port22-ec2-security.jpg)
 
 ![EC2 Security](/images/ec2-website-port22-ec2-networking.jpg)
@@ -79,6 +105,11 @@ aws cloudformation create-stack --stack-name "ec2-website-port22" --parameters P
 ![SSH Login](/images/ec2-website-port22-ssh-login.jpg)
 
 ![SSH](/images/ec2-website-port22-ssh.jpg)
+
+- test the egress to the internet from the ec2 instance is successful by:
+```
+$ ping www.google.com
+```
 
 - Check the website cannot be reached; open browser and go to the url:
   `https://ec2-35-89-113-216.us-west-2.compute.amazonaws.com/index.html`
@@ -97,6 +128,9 @@ Template filename: `templates/vpc-4subnets.yaml`
 Deploy a basic VPC with 4 subnets:
 - 2 publics and 2 privates
 - across 2 fixed availability zones (`us-west-2a`, and `us-west-2b`)
+
+**Goal:**
+- to demonstrate how to create the basic barebone VPC with 4 subnets 
 
 ### Create the stack
 
@@ -240,10 +274,101 @@ $ aws cloudformation delete-stack --stack-name "vpc-4subnets"
 
 - Delete the CloudFormation stack
 
-- Delete the VPC; all the subnets will be deleted automatically
+- Delete the VPC; all the subnets should also be deleted automatically
 
 
-## VPC with 4 subnets and internet gateway
+## VPC with 1 public subnet, internet gateway and EC2 + website 
 
-TBD
+Template filename: `templates/vpc-1publicsubnet-ec2-website.yaml`
+
+Deploy a basic VPC with:
+- one public Subnet
+- across a fixed availability zones, `us-west-2a`
+- Internet Gateway to allow the public subnet within the VPC to reach the
+  internet
+- an ec2 instance running in the subnet
+- a website hosted by httpd running in the ec2 instance
+- add the key-pair into the ec2 instance for ssh; the key-pair name is provided 
+  during the `create-stack`
+
+**Goal:**
+- to demonstrate how to setup a simple VPC with 1 subnet
+- configure the VPC for accessing the internet using the Internet Gateway
+- configure the subnet within the VPC to be public
+- configure the public subnet to allow egress access to the internet;
+  NOTE: there is an implicit entry included on every route table called the 
+  "local" route, all trafffic for 10.1.0.0/16 stays within the VPC.
+- configure an EC2 instance running in the public subnet
+- configure the EC2 instance to have a public IP
+- configure the EC2 Security Group to allow ingress through 
+  ports 22 and 80, for ssh and accessing the website hosted on the EC2 instance,
+  respectively.
+  
+**References:**
+- [Building a VPC with CloudFormation - Part 1](https://www.infoq.com/articles/aws-vpc-cloudformation/)
+- [AWS - Difference between NAT Gateway and Internet Gateway](https://explainexample.com/computers/aws/aws-difference-between-nat-gateway-and-internet-gateway)
+
+### Create the stack using aws cli
+
+```
+$ aws cloudformation create-stack --stack-name "vpc-1publicsubnet-ec2-website" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./templates/vpc-1publicsubnet-ec2-website.yaml
+``` 
+
+### Validate
+
+- SSH into the ec2 instance using the private key-pair, and `username: ec2-user`
+
+- test the egress to the internet from the ec2 instance is successful by:
+```
+$ ping www.google.com
+```
+
+- Check the website cannot be reached; open browser and go to the url:
+  `https://ec2-35-89-113-216.us-west-2.compute.amazonaws.com/index.html`
+
+
+**Stack**
+
+![Stack - Stack Info](/images/vpc-1publicsubnet-ec2-website-stack-info.jpg)
+
+![Stack - Stack Resources](/images/vpc-1publicsubnet-ec2-website-stack-resources.jpg)
+
+
+**Internet Gateway**
+
+![Stack - Internet Gateway](/images/vpc-1publicsubnet-ec2-website-igateway.jpg)
+
+
+**Subnet**
+
+![Stack - Subnet Route Table](/images/vpc-1publicsubnet-ec2-website-subnet-routetable.jpg)
+
+![Stack - Subnet Network ACL](/images/vpc-1publicsubnet-ec2-website-subnet-networkacl.jpg)
+
+
+**EC2 - Security**
+
+![Stack - EC2 Security](/images/vpc-1publicsubnet-ec2-website-ec2-security.jpg)
+
+![Stack - EC2 Networking](/images/vpc-1publicsubnet-ec2-website-ec2-networking.jpg)
+
+![Stack - EC2 Security Group Inbound Rules](/images/vpc-1publicsubnet-ec2-website-ec2-secgroup-inboundrules.jpg)
+
+![Stack - EC2 Security Group Outbound Rules](/images/vpc-1publicsubnet-ec2-website-ec2-secgroup-outboundrules.jpg)
+
+
+### CLEANUP using aws cli
+
+```
+$ aws cloudformation delete-stack --stack-name "vpc-1publicsubnet-ec2-website"
+```
+
+
+## VPC with 4 subnets, internet gateway and load balancer
+
+```
+
+$ aws cloudformation create-stack --stack-name "vpc-2publicsubnet-alb-ec2-website" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./templates/vpc-2publicsubnet-alb-ec2-website.yaml
+
+``` 
 

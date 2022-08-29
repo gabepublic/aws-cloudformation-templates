@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # This CloudFormation template deploys a basic EC2:
 # - with httpd
 # - very simple website
-# - security group to allow ingress port 80
+# - security group to allow ingress port 80, and egress to internet
 
 Resources:
   EC2Instance:
