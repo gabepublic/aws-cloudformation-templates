@@ -112,7 +112,7 @@ $ ping www.google.com
 ```
 
 - Check the website cannot be reached; open browser and go to the url:
-  `https://ec2-35-89-113-216.us-west-2.compute.amazonaws.com/index.html`
+  `http://ec2-35-89-113-216.us-west-2.compute.amazonaws.com/index.html`
  
 ### CLEANUP using aws cli
 
@@ -277,14 +277,14 @@ $ aws cloudformation delete-stack --stack-name "vpc-4subnets"
 - Delete the VPC; all the subnets should also be deleted automatically
 
 
-## VPC with 1 public subnet, internet gateway and EC2 + website 
+## VPC with 1 public subnet, igw and EC2 + website 
 
 Template filename: `templates/vpc-1publicsubnet-ec2-website.yaml`
 
 Deploy a basic VPC with:
 - one public Subnet
 - across a fixed availability zones, `us-west-2a`
-- Internet Gateway to allow the public subnet within the VPC to reach the
+- Internet Gateway (igw) to allow the public subnet within the VPC to reach the
   internet
 - an ec2 instance running in the subnet
 - a website hosted by httpd running in the ec2 instance
@@ -323,8 +323,9 @@ $ aws cloudformation create-stack --stack-name "vpc-1publicsubnet-ec2-website" -
 $ ping www.google.com
 ```
 
-- Check the website cannot be reached; open browser and go to the url:
-  `https://ec2-35-89-113-216.us-west-2.compute.amazonaws.com/index.html`
+- Check the website can be reached using the EC2 instance public IP; 
+  open browser and go to the url:
+  `http://54.245.31.119/index.html`
 
 
 **Stack**
@@ -364,11 +365,187 @@ $ aws cloudformation delete-stack --stack-name "vpc-1publicsubnet-ec2-website"
 ```
 
 
-## VPC with 4 subnets, internet gateway and load balancer
+## VPC with 2 public subnets, igw, load balancer, and EC2 + website
+
+Template filename: `templates/vpc-2publicsubnet-alb-ec2-website.yaml`
+
+Deploy a basic VPC with:
+- two public subnets
+- across a fixed availability zones, `us-west-2a` and `us-west-2b`
+- Internet Gateway to allow the public subnets within the VPC to reach the
+  internet
+- an ec2 instance running in each subnets
+- a website hosted by httpd running in the ec2 instance
+- add the key-pair into the ec2 instance for ssh; the key-pair name is provided 
+  during the `create-stack`; however, for this example we will not be able to
+  ssh into the ec2 instance(s). We need another setup (called bastion) to
+  enable ssh.
+
+**Goal:**
+- to demonstrate how to setup a simple VPC with 2 public subnets
+- configure an Application Load Balancer to reach the 2 public subnets, and
+- access the website hosted on the EC2 instances in the subnets
+  
+**References:**
+- [Building a VPC with CloudFormation - Part 1](https://www.infoq.com/articles/aws-vpc-cloudformation/)
+- [CloudFormation Template for VPC with EC2 and ALB](https://dev.classmethod.jp/articles/cloudformation-template-for-vpc-with-ec2-and-alb/)
+
+### Create the stack using aws cli
 
 ```
-
-$ aws cloudformation create-stack --stack-name "vpc-2publicsubnet-alb-ec2-website" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./templates/vpc-2publicsubnet-alb-ec2-website.yaml
-
+$ aws cloudformation create-stack --stack-name "vpc-2pubsubnet-alb-ec2" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./templates/vpc-2publicsubnet-alb-ec2-website.yaml
 ``` 
 
+### Validate
+
+**Stack**
+
+![Stack - Resources](/images/vpc-2publicsubnet-alb-ec2-website-stack-resources.jpg)
+
+
+**Application Load Balancer**
+
+![ALB - Description](/images/vpc-2publicsubnet-alb-ec2-website-alb-desc.jpg)
+
+![ALB - Listeners](/images/vpc-2publicsubnet-alb-ec2-website-alb-listerners.jpg)
+
+![ALB - Target Group](/imagesvpc-2publicsubnet-alb-ec2-website-alb-targetgroup.jpg)
+
+
+- Check the website can be reached using the load balancer public IP that 
+  can be found from the "AWS console > EC2 > Load Balancers", and select the
+  alb name "vpc-2publicsubnet-alb-ec2-website-ALB". From the "Description" tab,
+  copy the "DNS name". Open the browser and go to the url:
+  `http://vpc-2-appli-9gvoqobobs-538715591.us-west-2.elb.amazonaws.com/`
+
+- the webpage load balance regularlly between the two ec2 instance in the
+  two availability zones: us-west-2a, us-west-2b
+  
+- Confirm that we cannot ssh using the DNS name. 
+  
+  
+### CLEANUP using aws cli
+
+```
+$ aws cloudformation delete-stack --stack-name "vpc-2pubsubnet-alb-ec2"
+```
+
+
+## VPC 2 public subnets, bastion host, alb, ec2 + website
+
+Template filename: `templates/vpc-2publicsubnet-alb-bastion-ec2.yaml`
+
+Deploy a basic VPC with:
+- two public subnets
+
+**Goal:**
+- to demonstrate how to setup bastion
+- bastion and other ec2 instances in the public subnets are reachable via ssh
+
+**References:**
+- [Launch and use a Bastion Host on AWS](https://scratchpad.blog/launch-and-use-a-bastion-host-on-aws/)
+  - [cf template](https://s3.eu-central-1.amazonaws.com/com.carpinuslabs.cloudformation.templates/ops/bastion-host.yaml)
+- [Best Practices for setting up a VPC](https://scratchpad.blog/best-practices-for-setting-up-a-vpc/)
+  - [cf template](https://github.com/jenseickmeyer/cloudformation-templates/blob/master/network/vpc.yaml)
+- [multi-tier-web-app-in-vpc.template](https://aws.amazon.com/cloudformation/templates/aws-cloudformation-templates-ap-northeast-1/)
+  - [cf template](https://s3-ap-northeast-1.amazonaws.com/cloudformation-templates-ap-northeast-1/multi-tier-web-app-in-vpc.template)
+
+
+### Create the stack using aws cli
+
+```
+$ aws cloudformation create-stack --stack-name "vpc-2pubsub-alb-bastion" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./templates/vpc-2publicsubnet-alb-bastion-ec2.yaml
+``` 
+
+### Validate
+
+- From the aws console - EC2 page > instances, select "Bastion Host"
+
+- On the EC2 page > instances > Bastion Host page, copy the Public IPv4 address
+
+- Test ssh to bastion host
+  - using ssh client, such as termius or putty, ssh into bastion host
+
+- Test egress from bastion host; SUCCESS. Note: `ping` does not work. 
+```
+$ curl www.google.com
+<!doctype html><html itemscope="" itemtype="http://schema.org/WebPage" lang="en"><head>
+[...]
+;</script>        </body></html>
+
+$ ping www.google.com
+PING www.google.com (142.251.33.100) 56(84) bytes of data.
+^C
+--- www.google.com ping statistics ---
+14 packets transmitted, 0 received, 100% packet loss, time 13291ms
+```
+
+- Cannot use `ping` to reach the ec2 instances using private IP
+
+- Exit from bastion host
+
+- Next, setup Putty to use SSH agent forwarding;
+  For details, see [Securely Connect to Linux Instances Running in a Private Amazon VPC](https://aws.amazon.com/blogs/security/securely-connect-to-linux-instances-running-in-a-private-amazon-vpc/)
+
+- ssh into bastion host using public IP, username: ec2-user, and the ssh key
+  ppk file
+```
+login as: ec2-user
+Authenticating with public key "gabe2022oregon" from agent
+Last login: Wed Aug 31 00:42:48 2022 from 98.37.95.79
+
+       __|  __|_  )
+       _|  (     /   Amazon Linux 2 AMI
+      ___|\___|___|
+
+https://aws.amazon.com/amazon-linux-2/
+No packages needed for security; 4 packages available
+Run "sudo yum update" to apply all updates.
+[ec2-user@ip-10-1-20-118 ~]$ curl www.google.com
+<!doctype html><html itemscope="" itemtype="http://schema.org/WebPage" lang="en"><head>
+[...]
+;</script>        </body></html>
+[ec2-user@ip-10-1-20-118 ~]$ 
+```
+
+- From the bastion host console, ssh into the other ec2 instances
+```
+[ec2-user@ip-10-1-20-118 ~]$ ssh ec2-user@10.1.20.208
+
+       __|  __|_  )
+       _|  (     /   Amazon Linux 2 AMI
+      ___|\___|___|
+
+https://aws.amazon.com/amazon-linux-2/
+[ec2-user@ip-10-1-20-208 ~]$ ls -al /var/www/html
+total 4
+drwxr-xr-x 2 root root 24 Aug 31 00:37 .
+drwxr-xr-x 4 root root 33 Aug 31 00:37 ..
+-rw-r--r-- 1 root root 38 Aug 31 00:37 index.html
+[ec2-user@ip-10-1-20-208 ~]$ cat /var/www/html/index.html
+<h1>Hello from Region us-west-2b</h1>
+[ec2-user@ip-10-1-20-208 ~]$
+[ec2-user@ip-10-1-20-208 ~]$ curl www.google.com
+<!doctype html><html itemscope="" itemtype="http://schema.org/WebPage" lang="en"><head>
+[...]
+;</script>        </body></html>
+[ec2-user@ip-10-1-20-208 ~]$ exit
+[ec2-user@ip-10-1-20-118 ~]$
+```
+
+### CLEANUP using aws cli
+
+```
+$ aws cloudformation delete-stack --stack-name "vpc-2pubsub-alb-bastion"
+```
+
+
+## VPC with 4 subnets (2 public & 2 private), igw, alb, and EC2 + website
+
+Demonstrate ssh ec2 in private subnets 
+
+## Other todo setups:
+- nat gateway - once bastion is working, setup nat and test private subnet ec2
+  to access internet by ssh into the ec2 and curl www.google.com 
+
+- https - need ssl cert and valid domain name

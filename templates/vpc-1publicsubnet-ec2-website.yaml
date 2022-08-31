@@ -2,11 +2,11 @@ AWSTemplateFormatVersion: 2010-09-09
 
 # This CloudFormation template deploys a basic VPC:
 # - with 1 public subnet in the fixed Availability Zones, `us-west-2a`
-# - ec2 instance running httpdd and a website
+# - ec2 instance running httpdd and a website, and has public ip
 # - internet gateway enables the vpc to access to the internet
 # - the route table configurations enables the subnet to reach the internet
-#   gateway (via PublicRouteTable, PublicRoute, PublicSubnetRouteTableAssociation)
-# - 
+#   gateway
+# - ec2 security group enables ingress ports 22 and 80
 
 Description: basic VPC with 1 public subnet
 
