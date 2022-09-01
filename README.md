@@ -2,26 +2,45 @@
 
 CloudFormation templates for various infrastructure stacks.
 
+**EC2:**
+- [EC2 with ingress on port 80](https://github.com/gabepublic/aws-cloudformation-templates#ec2-with-ingress-on-port-80)
+- [EC2 with ingress on port 22](https://github.com/gabepublic/aws-cloudformation-templates#ec2-with-ingress-on-port-22)
+- [EC2 with ingress on ports 22 & 80]()
+
+**VPC:**
+- [VPC with 4 subnets](https://github.com/gabepublic/aws-cloudformation-templates#vpc-with-4-subnets)
+- [VPC with 1 public subnet, igw and EC2 + website](https://github.com/gabepublic/aws-cloudformation-templates#vpc-with-1-public-subnet-igw-and-ec2--website)
+- [VPC with 2 public subnets, igw, load balancer, and EC2 + website](https://github.com/gabepublic/aws-cloudformation-templates#vpc-with-2-public-subnets-igw-load-balancer-and-ec2--website)
+- [VPC 2 public subnets, bastion host, alb, ec2 + website](https://github.com/gabepublic/aws-cloudformation-templates#vpc-2-public-subnets-bastion-host-alb-ec2--website)
+- [TBD VPC with 4 subnets (2 public & 2 private), igw, alb, and EC2 website & APIs ]()
+
 
 ## EC2 with ingress on port 80
 
 Template filename: `templates/ec2-website-port80.yaml`
 
-Deploys a basic EC2:
-- very simple website with httpd
-- security group to allow ingress port 80 for accessing the website
+Deploys a basic EC2 instance with:
+- very simple website hosted with httpd
+- Security Group to allow ingress port 80 for accessing the website
 
 **Goal:**
-- to demonstrate how to setup EC2 instance 
+- to demonstrate how to setup a basic EC2 instance 
 - enable the website, hosted in the EC2 instance, to be accessible from the
   internet through port 80, using the EC2 Security Group configuration
-- NOTE: for a more comprehensive approach using VPC, please refer to 
+- NOTE: for a more comprehensive setup using VPC, please refer to 
   "VPC with 1 public subnet, internet gateway and EC2 + website" section below.  
+
+**Note:**
+With this basic setup, the EC2 instance will automatically be assigned a public
+IP address. The egress from the EC2 instance to the internet is also possible 
+due to the default "Security - Outbound rules" as shown in the aws console, 
+"EC2 - Security" page below; even though it cannot be demonstrated with this 
+setup, instead see "EC2 with ingress on ports 22" section below to validate it.  
 
 ### Create the stack using aws cli
 
 ```
-aws cloudformation create-stack --stack-name "ec2-website-port80" --template-body file://./templates/ec2-website-port80.yaml
+$ aws cloudformation create-stack --stack-name "ec2-website-port80" --template-body file://./templates/ec2-website-port80.yaml
 ``` 
 
 ### Validate
@@ -50,10 +69,10 @@ aws cloudformation create-stack --stack-name "ec2-website-port80" --template-bod
 
 ![Webpage](/images/ec2-website-port80-webpage.jpg)
 
-- Egress to the internet from the ec2 instance is also enabled this security 
-  group approach, but cannot be tested in this case (or using this particuar 
-  cloudformation template) because the ec2 instance is enabled for `ssh`. 
-  The egress will be validated on the next template "EC2 with ingress on port 22".
+- As indicated above, egress to the internet from the ec2 instance is enabled, 
+  but it cannot be demonstarted in this setup because the ec2 instance is not
+  enabled for `ssh`. The egress will be validated on the next template 
+  "EC2 with ingress on port 22".
 
 ### CLEANUP using aws cli
 
@@ -66,19 +85,21 @@ $ aws cloudformation delete-stack --stack-name "ec2-website-port80"
 
 Template filename: `templates/ec2-website-port22.yaml`
 
-Deploys a basic EC2:
+Deploys a basic EC2 instance with:
 - very simple website with httpd & but it's not acessible from the internet 
   because the security group is not enabled for ingress port 80.
-  See the "EC2 with ingress on port 80" section above how to enable access to
-  the website from internet
-- the key-pair for ssh into the instance; need to be provided during stack setup,
-  either aws console or aws cli
-- security group to allow ingress port 22 for ssh into the instance, and
-  egress to the internet
+  See the "EC2 with ingress on port 80" section above for how to enable access 
+  to the website from internet
+- the key-pair for ssh into the instance; need to be provided during the stack
+  setup, as shown below
+- Security group to allow ingress port 22 for ssh into the instance, and
+  egress to the internet is enabled by default
 
 **Goal:**
-- to demonstrate how to enable SSH through port 22 to the EC2 instance from the
-  internet
+- to demonstrate how to enable SSH (port 22) to the EC2 instance from the
+  internet using the ssh key-pair
+- the egress to internet from the EC2 instance is enabled by default 
+
 
 ## Prerequisite - create the key-pair
 
@@ -118,6 +139,54 @@ $ ping www.google.com
 
 ```
 $ aws cloudformation delete-stack --stack-name "ec2-website-port22"
+```
+
+
+## EC2 with ingress on ports 22 & 80
+
+Template filename: `templates/ec2-website-port80.yaml`
+
+Deploys a basic EC2 instance with:
+- very simple website hosted with httpd
+- the key-pair for ssh into the instance; need to be provided during the stack
+  setup, as shown below
+- Security Group to allow ingress ports: 22 & 80 for ssh & accessing the 
+  website, respectively
+
+**Goal:**
+- to demonstrate how to setup a basic EC2 instance 
+- enable the website, hosted in the EC2 instance, to be accessible from the
+  internet through port 80, using the EC2 Security Group configuration
+
+
+- to demonstrate how to setup a basic EC2 instance 
+- enable the website, hosted in the EC2 instance, to be accessible from the
+  internet through port 80, using the EC2 Security Group configuration
+- enable ssh to be accessible from the internet via port 22
+
+
+### Create the stack using aws cli
+
+```
+$ aws cloudformation create-stack --stack-name "ec2-website-ports22-80" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./tmp/ec2-website-ports22-80.yaml
+``` 
+
+### Validate
+
+- The "Security - Inbound rules" page on the aws console should list two rules
+  enabling port: 22 and 80
+
+- The default "Security - Outbound rules" on the aws console allows egress 
+  from the EC2 instance to the internet, by default. This can be demonstrated
+  by ssh into the EC2 instance and perform:
+```
+$ curl www.google.com
+```
+ 
+### CLEANUP using aws cli
+
+```
+$ aws cloudformation delete-stack --stack-name "ec2-website-ports22-80"
 ```
 
 
