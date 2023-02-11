@@ -481,6 +481,10 @@ $ aws cloudformation create-stack --stack-name "vpc-2pubsubnet-alb-ec2" --parame
 ![ALB - Target Group](/imagesvpc-2publicsubnet-alb-ec2-website-alb-targetgroup.jpg)
 
 
+- Note: the ec2 instances are not accessible from http port 80, even though
+  they have assigned public ip address. Their Security Group, inbound rules
+  only allow http port 80 from the ALB
+  
 - Check the website can be reached using the load balancer public IP that 
   can be found from the "AWS console > EC2 > Load Balancers", and select the
   alb name "vpc-2publicsubnet-alb-ec2-website-ALB". From the "Description" tab,
@@ -488,9 +492,16 @@ $ aws cloudformation create-stack --stack-name "vpc-2pubsubnet-alb-ec2" --parame
   `http://vpc-2-appli-9gvoqobobs-538715591.us-west-2.elb.amazonaws.com/`
 
 - the webpage load balance regularlly between the two ec2 instance in the
-  two availability zones: us-west-2a, us-west-2b
+  two availability zones, for example: us-west-2a, us-west-2b
   
-- Confirm that we cannot ssh using the DNS name. 
+- Confirm ssh is accessible by connecting directly to the ec2 instances
+  public ip address. Reasons:
+  - the ec2 SecurityGroup (see template `EC2SecurityGroup`) ingress allows
+    `tcp:22`; unlike the `tcp:80` only allows source from `ELBSecurityGroup`
+  - So, the `ELBSecurityGroup` has no effect to `tcp:80`
+```
+$ ssh -i "MyKeyPair.pem" ec2-user@<35.90.243.22>
+```
   
   
 ### CLEANUP using aws cli
