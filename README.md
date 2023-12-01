@@ -168,7 +168,7 @@ Deploys a basic EC2 instance with:
 ### Create the stack using aws cli
 
 ```
-$ aws cloudformation create-stack --stack-name "ec2-website-ports22-80" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./tmp/ec2-website-ports22-80.yaml
+$ aws cloudformation create-stack --stack-name "ec2-website-ports22-80" --parameters ParameterKey=KeyName,ParameterValue=gabe2022oregon --template-body file://./templates/ec2-website-ports22-80.yaml
 ``` 
 
 ### Validate
