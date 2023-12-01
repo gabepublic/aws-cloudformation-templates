@@ -20,7 +20,7 @@ Resources:
       InstanceType: t2.micro
       Tags:
         - Key: Name
-          Value: EC2 with ingress port 22
+          Value: EC2 with website and ingress ports 22 and 80
       SecurityGroups:
         - !Ref EC2sshSecurityGroup
       KeyName: !Ref KeyName
@@ -37,7 +37,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: "EC2ssh Security Group"
-      GroupDescription: EC2 with ssh ingress port 22
+      GroupDescription: EC2 with ingress ports 22 and 80
       SecurityGroupIngress:
         - IpProtocol: "tcp"
           CidrIp: "0.0.0.0/0"
