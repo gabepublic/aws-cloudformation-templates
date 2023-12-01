@@ -5,7 +5,7 @@ CloudFormation templates for various infrastructure stacks.
 **EC2:**
 - [EC2 with ingress on port 80](https://github.com/gabepublic/aws-cloudformation-templates#ec2-with-ingress-on-port-80)
 - [EC2 with ingress on port 22](https://github.com/gabepublic/aws-cloudformation-templates#ec2-with-ingress-on-port-22)
-- [EC2 with ingress on ports 22 & 80]()
+- [EC2 with ingress on ports 22 & 80](#ec2-with-ingress-on-ports-22--80)
 
 **VPC:**
 - [VPC with 4 subnets](https://github.com/gabepublic/aws-cloudformation-templates#vpc-with-4-subnets)
