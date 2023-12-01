@@ -3,16 +3,16 @@
 CloudFormation templates for various infrastructure stacks.
 
 **EC2:**
-- [EC2 with ingress on port 80](https://github.com/gabepublic/aws-cloudformation-templates#ec2-with-ingress-on-port-80)
-- [EC2 with ingress on port 22](https://github.com/gabepublic/aws-cloudformation-templates#ec2-with-ingress-on-port-22)
+- [EC2 with ingress on port 80](#ec2-with-ingress-on-port-80)
+- [EC2 with ingress on port 22](#ec2-with-ingress-on-port-22)
 - [EC2 with ingress on ports 22 & 80](#ec2-with-ingress-on-ports-22--80)
 
 **VPC:**
-- [VPC with 4 subnets](https://github.com/gabepublic/aws-cloudformation-templates#vpc-with-4-subnets)
-- [VPC with 1 public subnet, igw and EC2 + website](https://github.com/gabepublic/aws-cloudformation-templates#vpc-with-1-public-subnet-igw-and-ec2--website)
-- [VPC with 2 public subnets, igw, load balancer, and EC2 + website](https://github.com/gabepublic/aws-cloudformation-templates#vpc-with-2-public-subnets-igw-load-balancer-and-ec2--website)
-- [VPC 2 public subnets, bastion host, alb, ec2 + website](https://github.com/gabepublic/aws-cloudformation-templates#vpc-2-public-subnets-bastion-host-alb-ec2--website)
-- [TBD VPC with 4 subnets (2 public & 2 private), igw, alb, and EC2 website & APIs ]()
+- [VPC with 4 subnets](#vpc-with-4-subnets)
+- [VPC with 1 public subnet, igw and EC2 + website](#vpc-with-1-public-subnet-igw-and-ec2--website)
+- [VPC with 2 public subnets, igw, load balancer, and EC2 + website](#vpc-with-2-public-subnets-igw-load-balancer-and-ec2--website)
+- [VPC 2 public subnets, bastion host, alb, ec2 + website](#vpc-2-public-subnets-bastion-host-alb-ec2--website)
+- *TBD VPC with 4 subnets (2 public & 2 private), igw, alb, and EC2 website & APIs*
 
 
 ## EC2 with ingress on port 80
