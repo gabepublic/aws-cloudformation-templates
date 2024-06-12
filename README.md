@@ -6,6 +6,7 @@ CloudFormation templates for various infrastructure stacks.
 - [EC2 with ingress on port 80](#ec2-with-ingress-on-port-80)
 - [EC2 with ingress on port 22](#ec2-with-ingress-on-port-22)
 - [EC2 with ingress on ports 22 & 80](#ec2-with-ingress-on-ports-22--80)
+- [EC2 with ingress on ports 22, 80 & 443](#ec2-with-ingress-on-ports-22-80--443)
 
 **VPC:**
 - [VPC with 4 subnets](#vpc-with-4-subnets)
@@ -14,6 +15,12 @@ CloudFormation templates for various infrastructure stacks.
 - [VPC 2 public subnets, bastion host, alb, ec2 + website](#vpc-2-public-subnets-bastion-host-alb-ec2--website)
 - *TBD VPC with 4 subnets (2 public & 2 private), igw, alb, and EC2 website & APIs*
 
+## REVISION HISTORY
+
+- Jun 12, 2024: Update EC2 templates to obtain & use the latest AMI; add
+  a new EC2 template for ssl (ec2-website-ports22-80-443.yaml); and
+  made the Security GroupName unique for each EC2 templates otherwise
+  conflict error when deploy at the same time.  
 
 ## EC2 with ingress on port 80
 
@@ -144,7 +151,7 @@ $ aws cloudformation delete-stack --stack-name "ec2-website-port22"
 
 ## EC2 with ingress on ports 22 & 80
 
-Template filename: `templates/ec2-website-port80.yaml`
+Template filename: `templates/ec2-website-ports22-80.yaml`
 
 Deploys a basic EC2 instance with:
 - very simple website hosted with httpd
@@ -157,8 +164,6 @@ Deploys a basic EC2 instance with:
 - to demonstrate how to setup a basic EC2 instance 
 - enable the website, hosted in the EC2 instance, to be accessible from the
   internet through port 80, using the EC2 Security Group configuration
-
-
 - to demonstrate how to setup a basic EC2 instance 
 - enable the website, hosted in the EC2 instance, to be accessible from the
   internet through port 80, using the EC2 Security Group configuration
@@ -188,6 +193,126 @@ $ curl www.google.com
 ```
 $ aws cloudformation delete-stack --stack-name "ec2-website-ports22-80"
 ```
+
+
+## EC2 with ingress on ports 22, 80 & 443
+
+Template filename: `templates/ec2-website-ports22-80-443.yaml`
+
+Deploys a basic EC2 instance with:
+- very simple website hosted with httpd
+- the key-pair for ssh into the instance; need to be provided during the stack
+  setup, as shown below
+- Security Group to allow ingress ports: 22, 80 & 443 for ssh, accessing
+  the website in-secure and https, respectively
+
+**Goal:**
+- to demonstrate how to setup a basic EC2 instance 
+- enable the website, hosted in the EC2 instance, to be accessible from
+  the internet through ports 80 & 443, using the EC2 Security Group configuration
+- to demonstrate how to setup a basic EC2 instance 
+- enable the website, hosted in the EC2 instance, to be accessible from the
+  internet through ports 80 & 443, using the EC2 Security Group configuration
+- enable ssh to be accessible from the internet via port 22
+
+NOTE:
+- With Amazon Linux 2023, it seems when `yum install mod_ssl` is added
+  the https is automatically configured; therefore, the following two 
+  steps below are no longer needed: "Create SSL certificate" &
+  "Configure Apache httpd for https". 
+  TO BE VERIFIED AGAIN after new deployment!!
+
+### Create SSL certificate  
+
+- Create SSL certificate to enable https on Apache web server `httpd`
+```
+sudo yum update -y
+sudo yum install openssl
+
+Last metadata expiration check: 0:27:19 ago on Wed Jun 12 02:47:55 2024.
+Package openssl-1:3.0.8-1.amzn2023.0.12.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+```
+
+- Generate Private Key: First, generate a private key:
+```
+cd ~/
+openssl genrsa -out server.key 2048
+```
+  This command generates a 2048-bit RSA private key and saves it to a 
+  file named "server.key". You can change the filename if desired.
+
+- Generate Certificate Signing Request (CSR): Next, generate a CSR using
+  the private key generated above:
+```
+openssl req -new -key server.key -out server.csr
+```
+  This command will prompt you to enter information such as your 
+  organization details, common name (domain name), etc. It will then 
+  generate a CSR and save it to a file named "server.csr".
+
+- Generate Self-Signed Certificate: Finally, generate a self-signed 
+  certificate using the private key and CSR:
+```
+openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+```
+  This command creates a self-signed certificate valid for 365 days and
+  saves it to a file named "server.crt".
+
+### Configure Apache httpd for https
+
+- Move the ssl certificate to httpd folder
+  NOTE: the best location to store SSL certificates for Apache HTTP 
+  Server (httpd) on Red Hat Enterprise Linux (RHEL) or CentOS systems is
+  typically in the `/etc/pki/tls` directory. Within this directory, 
+  you'll find subdirectories specifically designated for storing 
+  SSL certificates, private keys, and certificate authority (CA) 
+  certificates. Here's a recommended directory structure:
+  - Certificates: Place your SSL certificate files (e.g., server.crt)
+    in the `/etc/pki/tls/certs` directory.
+  - Private Keys: Store your private key files (e.g., server.key) in the
+    `/etc/pki/tls/private` directory.
+  - Certificate Authority (CA) Certificates: If applicable, you can 
+    store CA certificates in the `/etc/pki/tls/certs` directory or 
+	create a separate directory such as `/etc/pki/tls/certs/ca`.
+  - For example, if you've generated a self-signed SSL certificate 
+    named "server.crt" and a private key named "server.key", you would 
+	place these files in the following locations:
+    - SSL certificate: `/etc/pki/tls/certs/server.crt`
+	- Private key: `/etc/pki/tls/private/server.key`
+```
+cd ~
+sudo mv server.crt /etc/pki/tls/certs/
+sudo mv server.key /etc/pki/tls/private/
+```
+
+- Configure `/etc/httpd/conf/httpd.conf`: to comment out the line 
+  `Listen 80` if you want to block `http` (recommended); otherwise,
+  skip this step and both `http` and `https` will work  
+  
+- Configure Apache: to use the generated the SSL certificate.
+  Edit the Apache configuration file (typically located at 
+  `/etc/httpd/conf.d/ssl.conf`) and update the SSL configuration 
+  section to point to the generated SSL certificate and private key 
+  files. The `httpd.conf` already include the `ssl.conf` at the end of 
+  the file: `IncludeOptional conf.d/*.conf`
+```
+SSLCertificateFile /etc/pki/tls/certs/server.crt
+SSLCertificateKeyFile /etc/pki/tls/private/server.key
+```
+
+- Restart Apache: After updating the Apache configuration, restart the 
+  Apache HTTP Server to apply the changes:
+```
+sudo systemctl restart httpd
+```
+
+- Please note that while self-signed certificates provide encryption, 
+  they may not be trusted by web browsers out of the box and may trigger
+  security warnings. It's recommended to use trusted SSL certificates 
+  from a Certificate Authority (CA) for production environments.
 
 
 ## VPC with 4 subnets

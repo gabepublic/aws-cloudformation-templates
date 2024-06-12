@@ -3,13 +3,20 @@ AWSTemplateFormatVersion: 2010-09-09
 # This CloudFormation template deploys a basic EC2:
 # - with httpd & very simple website
 # - security group to allow ingress port 80, and egress to internet
+# Stack name: ec2-website-port80
+
+Parameters:
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64'
 
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone: us-west-2a
-      ImageId: ami-0c2ab3b8efb09f272
+      #ImageId: ami-0c2ab3b8efb09f272
+      ImageId: !Ref LatestAmiId
       InstanceType: t2.micro
       Tags:
         - Key: Name
